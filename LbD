@@ -1,0 +1,189 @@
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+local Window = Rayfield:CreateWindow({
+   Name = "LastBluuDawn",
+   Icon = 0, -- Icon in Topbar. Can use Lucide Icons (string) or Roblox Image (number). 0 to use no icon (default).
+   LoadingTitle = "Loading Modules..",
+   LoadingSubtitle = "by LuauIsBluu",
+   ShowText = "Rayfield", -- for mobile users to unhide rayfield, change if you'd like
+   Theme = "Default", -- Check https://docs.sirius.menu/rayfield/configuration/themes
+
+   ToggleUIKeybind = "B", -- The keybind to toggle the UI visibility (string like "K" or Enum.KeyCode)
+
+   DisableRayfieldPrompts = false,
+   DisableBuildWarnings = false, -- Prevents Rayfield from warning when the script has a version mismatch with the interface
+
+   ConfigurationSaving = {
+      Enabled = true,
+      FolderName = nil, -- Create a custom folder for your hub/game
+      FileName = "Big Hub"
+   },
+
+   Discord = {
+      Enabled = false, -- Prompt the user to join your Discord server if their executor supports it
+      Invite = "noinvitelink", -- The Discord invite code, do not include discord.gg/. E.g. discord.gg/ ABCD would be ABCD
+      RememberJoins = true -- Set this to false to make them join the discord every time they load it up
+   },
+
+   KeySystem = false, -- Set this to true to use our key system
+   KeySettings = {
+      Title = "Untitled",
+      Subtitle = "Key System",
+      Note = "No method of obtaining the key is provided", -- Use this to tell the user how to get a key
+      FileName = "Key", -- It is recommended to use something unique as other scripts using Rayfield may overwrite your key file
+      SaveKey = true, -- The user's key will be saved, but if you change the key, they will be unable to use your script
+      GrabKeyFromSite = false, -- If this is true, set Key below to the RAW site you would like Rayfield to get the key from
+      Key = {"Hello"} -- List of keys that will be accepted by the system, can be RAW file links (pastebin, github etc) or simple strings ("hello","key22")
+   }
+})
+
+ local Main = Window:CreateTab("Main", 4483362458)
+
+
+ local Section = Main:CreateSection("ESP Zombies ")
+
+local folder = workspace:WaitForChild("ActiveZombies")
+
+local zombieColors = {
+	Bloodletter = Color3.fromRGB(255, 115, 0), -- orange
+	Shambler = Color3.fromRGB(255, 255, 255), -- white
+	VariantShambler = Color3.fromRGB(255, 255, 255), -- white
+	Butcher = Color3.fromRGB(0, 85, 255), -- blue
+	Sniveler = Color3.fromRGB(255, 255, 0), -- yellow
+	Boomer = Color3.fromRGB(255, 0, 0) -- red
+}
+
+local highlights = {}
+
+local function highlightModel(model, color)
+	if not highlights[model] then
+		local hl = Instance.new("Highlight")
+		hl.FillColor = color
+		hl.OutlineColor = color
+		hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+		hl.Parent = model
+		highlights[model] = hl
+	end
+end
+
+local function removeHighlight(model)
+	if highlights[model] then
+		highlights[model]:Destroy()
+		highlights[model] = nil
+	end
+end
+
+local function toggleHighlight(zombieName, enabled)
+	for _, mob in ipairs(folder:GetChildren()) do
+		if mob.Name == zombieName then
+			if enabled then
+				highlightModel(mob, zombieColors[zombieName])
+			else
+				removeHighlight(mob)
+			end
+		end
+	end
+end
+
+folder.ChildAdded:Connect(function(child)
+	if zombieColors[child.Name] then
+		local flag = "Toggle_" .. child.Name
+		local toggle = Rayfield.Flags[flag]
+		if toggle and toggle.CurrentValue then
+			highlightModel(child, zombieColors[child.Name])
+		end
+	end
+end)
+
+folder.ChildRemoved:Connect(removeHighlight)
+
+Main:CreateToggle({
+	Name = "Bloodletter",
+	CurrentValue = false,
+	Flag = "Toggle_Bloodletter",
+	Callback = function(Value)
+		toggleHighlight("Bloodletter", Value)
+	end
+})
+
+Main:CreateToggle({
+	Name = "Shambler",
+	CurrentValue = false,
+	Flag = "Toggle_Shambler",
+	Callback = function(Value)
+		toggleHighlight("Shambler", Value)
+	end
+})
+
+Main:CreateToggle({
+	Name = "VariantShambler",
+	CurrentValue = false,
+	Flag = "Toggle_VariantShambler",
+	Callback = function(Value)
+		toggleHighlight("VariantShambler", Value)
+	end
+})
+
+Main:CreateToggle({
+	Name = "Butcher",
+	CurrentValue = false,
+	Flag = "Toggle_Butcher",
+	Callback = function(Value)
+		toggleHighlight("Butcher", Value)
+	end
+})
+
+Main:CreateToggle({
+	Name = "Sniveler",
+	CurrentValue = false,
+	Flag = "Toggle_Sniveler",
+	Callback = function(Value)
+		toggleHighlight("Sniveler", Value)
+	end
+})
+
+Main:CreateToggle({
+	Name = "Boomer",
+	CurrentValue = false,
+	Flag = "Toggle_Boomer",
+	Callback = function(Value)
+		toggleHighlight("Boomer", Value)
+	end
+})
+
+local Section = Main:CreateSection("Kill Aura")
+
+local player = game.Players.LocalPlayer
+local backpack = player:WaitForChild("Backpack")
+local knife = backpack:WaitForChild("Knife")
+local fireEvent = knife:WaitForChild("Events"):WaitForChild("Fire")
+
+local folder = workspace:WaitForChild("ActiveZombies")
+local maxDistance = 20 -- studs, adjust as needed
+
+-- Function to fire at nearby zombies
+local function fireAtNearbyZombies()
+	for _, zombie in ipairs(folder:GetChildren()) do
+		if zombie:IsA("Model") and zombie:FindFirstChild("HumanoidRootPart") then
+			local distance = (player.Character.HumanoidRootPart.Position - zombie.HumanoidRootPart.Position).Magnitude
+			if distance <= maxDistance then
+				fireEvent:FireServer(zombie) -- pass zombie as argument if needed
+			end
+		end
+	end
+end
+
+-- // Rayfield button
+Main:CreateButton({
+	Name = "Attack Nearby Zombies",
+	Callback = function()
+		fireAtNearbyZombies()
+	end
+})
+
+Rayfield:Notify({
+   Title = "Idk",
+   Content = "Nah I'd win.",
+   Duration = 6.5,
+   Image = 4483362458,
+})
