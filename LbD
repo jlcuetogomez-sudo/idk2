@@ -151,36 +151,6 @@ Main:CreateToggle({
 	end
 })
 
-local Section = Main:CreateSection("Kill Aura")
-
-local player = game.Players.LocalPlayer
-local backpack = player:WaitForChild("Backpack")
-local knife = backpack:WaitForChild("Knife")
-local fireEvent = knife:WaitForChild("Events"):WaitForChild("Fire")
-
-local folder = workspace:WaitForChild("ActiveZombies")
-local maxDistance = 20 -- studs, adjust as needed
-
--- Function to fire at nearby zombies
-local function fireAtNearbyZombies()
-	for _, zombie in ipairs(folder:GetChildren()) do
-		if zombie:IsA("Model") and zombie:FindFirstChild("HumanoidRootPart") then
-			local distance = (player.Character.HumanoidRootPart.Position - zombie.HumanoidRootPart.Position).Magnitude
-			if distance <= maxDistance then
-				fireEvent:FireServer(zombie) -- pass zombie as argument if needed
-			end
-		end
-	end
-end
-
--- // Rayfield button
-Main:CreateButton({
-	Name = "Attack Nearby Zombies",
-	Callback = function()
-		fireAtNearbyZombies()
-	end
-})
-
 Rayfield:Notify({
    Title = "Idk",
    Content = "Nah I'd win.",
