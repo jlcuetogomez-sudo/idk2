@@ -1,9 +1,27 @@
+-- Watcher: auto-remove if it respawns
+task.spawn(function()
+	while task.wait(3) do
+		local playerClient = StarterPlayer:FindFirstChild("StarterPlayerScripts")
+		if playerClient then
+			playerClient = playerClient:FindFirstChild("PLAYER_CLIENT")
+			if playerClient then
+				local badScript = playerClient:FindFirstChild("what is it that you truly desire?")
+				if badScript then
+					badScript:Destroy()
+					warn("[Rayfield] Deleted reappearing malicious script.")
+				end
+			end
+		end
+	end
+end)
+
+
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local Window = Rayfield:CreateWindow({
    Name = "LastBluuDawn",
    Icon = 0, -- Icon in Topbar. Can use Lucide Icons (string) or Roblox Image (number). 0 to use no icon (default).
-   LoadingTitle = "Loading Modules..",
+   LoadingTitle = "LastBluuDawn",
    LoadingSubtitle = "by LuauIsBluu",
    ShowText = "Rayfield", -- for mobile users to unhide rayfield, change if you'd like
    Theme = "Default", -- Check https://docs.sirius.menu/rayfield/configuration/themes
@@ -151,9 +169,122 @@ Main:CreateToggle({
 	end
 })
 
+-- // WalkSpeed Lock System (Fixed + Auto-Character Support)
+local player = game.Players.LocalPlayer
+local humanoid
+local lockedSpeed = 16
+local lockEnabled = false
+
+-- Function to get current humanoid safely
+local function getHumanoid()
+	local char = player.Character or player.CharacterAdded:Wait()
+	return char:WaitForChild("Humanoid")
+end
+
+-- Initialize humanoid
+humanoid = getHumanoid()
+
+-- Update humanoid when character respawns
+player.CharacterAdded:Connect(function(char)
+	task.wait(1)
+	humanoid = char:WaitForChild("Humanoid")
+	if lockEnabled then
+		humanoid.WalkSpeed = lockedSpeed
+	end
+end)
+
+-- Section for WalkSpeed control
+local speedSection = Main:CreateSection("WalkSpeed Control")
+
+-- Slider to choose speed
+Main:CreateSlider({
+	Name = "WalkSpeed",
+	Range = {16, 39}, -- min and max speed
+	Increment = 1,
+	Suffix = "Speed",
+	CurrentValue = lockedSpeed,
+	Flag = "Slider_WalkSpeed",
+	Callback = function(Value)
+		lockedSpeed = Value
+		if lockEnabled and humanoid then
+			humanoid.WalkSpeed = lockedSpeed
+		end
+	end
+})
+
+-- Toggle for lock
+Main:CreateToggle({
+	Name = "Lock WalkSpeed",
+	CurrentValue = false,
+	Flag = "Toggle_LockWalkSpeed",
+	Callback = function(Value)
+		lockEnabled = Value
+		if Value then
+			task.spawn(function()
+				while lockEnabled do
+					local hum = humanoid or getHumanoid()
+					if hum then
+						hum.WalkSpeed = lockedSpeed
+					end
+					task.wait(0.2)
+				end
+			end)
+		end
+	end
+})
+
+-- // No Jump Cooldown Toggle (optimized)
+local jumpSection = Main:CreateSection("Jump Control")
+
+local jumpConnection -- to prevent duplicate connections
+
+Main:CreateToggle({
+	Name = "No Jump Cooldown",
+	CurrentValue = false,
+	Flag = "Toggle_NoJumpCooldown",
+	Callback = function(Value)
+		local player = game.Players.LocalPlayer
+		local backpack = player:WaitForChild("Backpack")
+
+		-- function to update JumpCooldown safely
+		local function setCooldownDisabled(state)
+			local jc = backpack:FindFirstChild("JumpCooldown")
+			if jc then
+				jc.Disabled = state
+			else
+				Rayfield:Notify({
+					Title = "Warning",
+					Content = "JumpCooldown script not found in Backpack!",
+					Duration = 4
+				})
+			end
+		end
+
+		-- Apply immediately
+		setCooldownDisabled(Value)
+
+		-- Disconnect old connection if exists
+		if jumpConnection then
+			jumpConnection:Disconnect()
+			jumpConnection = nil
+		end
+		-- Watch for JumpCooldown being re-added only if toggle is on
+		if Value then
+			jumpConnection = backpack.ChildAdded:Connect(function(child)
+				if child.Name == "JumpCooldown" then
+					task.wait(0.1)
+					setCooldownDisabled(true)
+				end
+
+			end)
+		end
+	end
+})
+
+
 Rayfield:Notify({
-   Title = "Idk",
-   Content = "Nah I'd win.",
+   Title = "[EXECUTED!]",
+   Content = "Now you can cheat bypasing most part of anticheat.",
    Duration = 6.5,
    Image = 4483362458,
 })
